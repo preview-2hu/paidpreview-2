@@ -1,4 +1,4 @@
-import os, asyncio, humanize
+import os, asyncio, humanize, time
 from pyrogram import Client, filters, __version__
 from pyrogram.enums import ParseMode
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
@@ -7,6 +7,8 @@ from bot import Bot
 from config import ADMINS, FORCE_MSG, START_MSG, CUSTOM_CAPTION, DISABLE_CHANNEL_BUTTON, PROTECT_CONTENT, FILE_AUTO_DELETE
 from helper_func import subscribed, encode, decode, get_messages
 from database.database import add_user, del_user, full_userbase, present_user
+from database.dschedule import add_schedule, remove_schedule, get_all_schedules
+from bot import bot
 
 madflixofficials = FILE_AUTO_DELETE
 jishudeveloper = madflixofficials
@@ -92,7 +94,7 @@ async def start_command(client: Client, message: Message):
         k = await client.send_message(chat_id = message.from_user.id, text=f"<b>❗️ <u>IMPORTANT</u> ❗️</b>\n\nThis Video / File Will Be Deleted In {file_auto_delete} (Due To Copyright Issues).\n\n📌 Please Forward This Video / File To Somewhere Else And Start Downloading There.")
 
         # Schedule the file deletion
-        asyncio.create_task(delete_files(madflix_msgs, client, k))
+        add_schedule(message.from_user.id, k.id, [msg.id for msg in madflix_msgs])
         
         # for madflix_msg in madflix_msgs: 
             # try:
@@ -221,21 +223,23 @@ async def send_text(client: Bot, message: Message):
 
 
 
-
-
-
 # Function to handle file deletion
-async def delete_files(messages, client, k):
-    await asyncio.sleep(FILE_AUTO_DELETE)  # Wait for the duration specified in config.py
-    for msg in messages:
-        try:
-            await client.delete_messages(chat_id=msg.chat.id, message_ids=[msg.id])
-        except Exception as e:
-            print(f"The attempt to delete the media {msg.id} was unsuccessful: {e}")
-    # await client.send_message(messages[0].chat.id, "Your Video / File Is Successfully Deleted ✅")
-    await k.edit_text("Your Video / File Is Successfully Deleted ✅")
+async def delete_files(chat_id, messages, k):
+    try:
+        await bot.delete_messages(chat_id=chat_id, message_ids=messages)
+    except Exception as e:
+        print(f"The attempt to delete the media was unsuccessful: {e}")
+    await bot.edit_message_text(chat_id, k, "Your Video / File Is Successfully Deleted ✅")
 
-
+async def task():
+    while not await asyncio.sleep(10):
+        for schedule in get_all_schedules():
+            if time.time() - schedule['time'] > FILE_AUTO_DELETE:
+                try:
+                    await delete_files(schedule['chat_id'], schedule['msg_ids'], schedule['msg_id'])
+                except:
+                    pass
+                remove_schedule(schedule['chat_id'], schedule['msg_id'])
 
 # Jishu Developer 
 # Don't Remove Credit 🥺

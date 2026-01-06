@@ -69,8 +69,7 @@ class Bot(Client):
         self.LOGGER(__name__).info("Bot Stopped...")
             
 
-
-
+bot = Bot()
 
 
 # Jishu Developer 

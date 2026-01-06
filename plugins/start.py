@@ -228,7 +228,10 @@ async def send_text(client: Bot, message: Message):
 # Function to handle file deletion
 async def delete_files(chat_id, messages, k):
     try:
-        await bot.delete_messages(chat_id=chat_id, message_ids=messages)
+        for i in range(0, len(messages), 69):
+            msgs = messages[i: i+69]
+            await bot.delete_messages(chat_id=chat_id, message_ids=msgs)
+            await asyncio.sleep(5)
     except Exception as e:
         print(f"The attempt to delete the media was unsuccessful: {e}")
     await bot.edit_message_text(chat_id, k, "Your Video / File Is Successfully Deleted ✅")
